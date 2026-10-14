@@ -242,31 +242,60 @@ Goal: a minimal, crypto-free Nextcloud app that stores/returns the opaque file.
 
 ---
 
-## Phase 6 — Frontend shell (Vue 3 + TypeScript) (16 steps)
+## Phase 6 — Frontend shell (Vue 3 + TypeScript) (16 steps) ✅
 
 Goal: an unlock → list → edit → save UI wired to the crypto/format library.
 
-1. Add the Vue build toolchain: `npm i -D vite @vitejs/plugin-vue vue vue-router` plus
+1. ✅ Add the Vue build toolchain: `npm i -D vite @vitejs/plugin-vue vue vue-router` plus
    Nextcloud libs `@nextcloud/router @nextcloud/axios @nextcloud/dialogs @nextcloud/l10n`.
-2. `vite.config.ts`: input `src/main.ts`, output `js/upm.js`, plugin-vue.
-3. `src/main.ts`: mount the Vue app inside the Nextcloud `#content` element.
-4. `src/ui/UnlockView.vue`: master-password input + unlock button.
-5. `src/ui/AccountsView.vue`: search box + account list (name/userId).
-6. `src/ui/AccountForm.vue`: add/edit the five fields; password reveal toggle.
-7. `src/ui/App.vue`: unlocked-state router between Unlock and Accounts views.
-8. `src/state/session.ts`: hold the decrypted `PasswordDatabase` + key in memory
+2. ✅ `vite.config.ts`: input `src/main.ts`, output `js/upm.js`, plugin-vue.
+3. ✅ `src/main.ts`: mount the Vue app inside the Nextcloud `#content` element.
+4. ✅ `src/ui/UnlockView.vue`: master-password input + unlock button.
+5. ✅ `src/ui/AccountsView.vue`: search box + account list (name/userId).
+6. ✅ `src/ui/AccountForm.vue`: add/edit the five fields; password reveal toggle.
+7. ✅ `src/ui/App.vue`: unlocked-state router between Unlock and Accounts views.
+8. ✅ `src/state/session.ts`: hold the decrypted `PasswordDatabase` + key in memory
    only; `lock()` zeroes buffers and clears references.
-9. `src/state/session.ts`: auto-lock timer (configurable, default 5 min idle).
-10. Wire unlock: fetch blob → `decryptDatabase` → on `InvalidPasswordError`
+9. ✅ `src/state/session.ts`: auto-lock timer (configurable, default 5 min idle).
+10. ✅ Wire unlock: fetch blob → `decryptDatabase` → on `InvalidPasswordError`
     show "wrong master password".
-11. Wire save: edit in-memory db → `encryptDatabase` (same salt) → `PUT /db`.
-12. Add `src/ui/ExportButton.vue`: download the encrypted file (accepted
+11. ✅ Wire save: edit in-memory db → `encryptDatabase` (same salt) → `PUT /db`.
+12. ✅ Add `src/ui/ExportButton.vue`: download the encrypted file (accepted
     suggestion #7).
-13. Add loading/error states for every network + crypto operation.
-14. i18n scaffold with `@nextcloud/l10n` (English first).
-15. `npm run build` emits `js/upm.js`; commit build config.
+13. ✅ Add loading/error states for every network + crypto operation.
+14. ✅ i18n scaffold with `@nextcloud/l10n` (English first).
+15. ✅ `npm run build` emits `js/upm.js`; commit build config.
 16. ✅ Verify: `npm run build` succeeds; manual smoke test against the local
     Nextcloud dev instance from Phase 0.
+
+> Implemented in commit `c20a7a4`. Verified: `npm run build` → `js/upm.js`
+> (215 kB), `npm run typecheck` clean, `npm test` → 76 passing.
+> Deviations: no `vue-router` wiring — the "unlocked-state router" is a `v-if`
+> in `App.vue` (vue-router is installed per step 1 but unused for now); the UI
+> ships no CSS asset (Nextcloud classes + inline styles) so the bundle stays a
+> single `js/upm.js`; `js/upm.js` is committed so the app loads without a build
+> step; a 404 on unlock starts a new empty database. Note: Node 26 is above the
+> `@nextcloud/*` `engines` cap (`^24`), so the current versions
+> (`@nextcloud/axios@2`, `router@3`, `l10n@3`, `dialogs@7`) are pinned
+> explicitly — npm's auto-resolution otherwise installs ancient, vulnerable
+> versions.
+
+---
+
+## Additional tasks — unit tests & build (⬜ todo)
+
+Follow-ups requested on top of the phase steps:
+
+- ⬜ **Frontend unit tests** (`tests/ui/`): session `lock()` / auto-lock timer,
+  unlock error mapping (`InvalidPasswordError` → "wrong master password"; 404 →
+  new empty db), account rename-on-save, and the export path — Vitest +
+  `@vue/test-utils` (+ `happy-dom`).
+- ⬜ **Library coverage**: keep every `src/**` module unit-tested (crypto,
+  format, merge, storage, sync) and add a coverage threshold to `npm test`.
+- ⬜ **Build task**: document the repeatable build (`make build` →
+  `npm run build` → `js/upm.js`) in the README; wire it into the release flow.
+- ⬜ **CI task**: run `npm test`, `npm run typecheck`, `npm run build`,
+  `composer validate` and `php -l` on every change.
 
 ---
 
