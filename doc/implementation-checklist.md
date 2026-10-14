@@ -299,36 +299,51 @@ Follow-ups requested on top of the phase steps:
 
 ---
 
-## Phase 7 — Sync & storage (16 steps)
+## Phase 7 — Sync & storage (16 steps) ✅
 
 Goal: port the sync flow (download → merge → upload) with IndexedDB base/backups.
 
-1. `src/storage/remote.ts`: `getDb()`, `putDb(bytes)`, `deleteDb()` using
+1. ✅ `src/storage/remote.ts`: `getDb()`, `putDb(bytes)`, `deleteDb()` using
    `@nextcloud/axios` against the Phase 5 routes.
-2. `src/storage/remote.ts`: map 404 → `null` (no remote yet).
-3. `src/storage/syncBase.ts`: IndexedDB helpers `getBase`, `saveBase`,
+2. ✅ `src/storage/remote.ts`: map 404 → `null` (no remote yet).
+3. ✅ `src/storage/syncBase.ts`: IndexedDB helpers `getBase`, `saveBase`,
    `getConflictBackup`, `saveConflictBackup` (stores encrypted blobs).
-4. `src/sync/syncController.ts`: `sync(local, key)` implementing the flow in
+4. ✅ `src/sync/syncController.ts`: `sync(local, key)` implementing the flow in
    `doc/plan.md` §5 (1–6).
-5. `src/sync/syncController.ts`: no-base fallback = last-writer-wins + encrypted
+5. ✅ `src/sync/syncController.ts`: no-base fallback = last-writer-wins + encrypted
    conflict backup (mirror `syncDbLastWriterWins`).
-6. `src/sync/syncController.ts`: only write the base after a **converged** sync
+6. ✅ `src/sync/syncController.ts`: only write the base after a **converged** sync
    (upload succeeded, downloaded, or up-to-date).
-7. `src/sync/syncController.ts`: `DatabaseOptions` always from local.
-8. Add UI: sync button with progress + result toast ("up to date", "merged",
+7. ✅ `src/sync/syncController.ts`: `DatabaseOptions` always from local.
+8. ✅ Add UI: sync button with progress + result toast ("up to date", "merged",
    "N conflict(s) kept as copies", errors).
-9. Wire conflict copy naming into the accounts view (show `(remote)` entries).
-10. `tests/sync/syncController.test.ts`: mock `remote` + `syncBase`; assert the
+9. ✅ Wire conflict copy naming into the accounts view (show `(remote)` entries).
+10. ✅ `tests/sync/syncController.test.ts`: mock `remote` + `syncBase`; assert the
     merge decision matrix end-to-end (upload vs download vs up-to-date).
-11. `tests/sync/syncController.test.ts`: no-base LWW writes a conflict backup.
-12. `tests/sync/syncController.test.ts`: failed upload does **not** update base.
-13. Use `scripts/webdav-test.py`/`webdav-test-server.py` to seed a remote and
+11. ✅ `tests/sync/syncController.test.ts`: no-base LWW writes a conflict backup.
+12. ✅ `tests/sync/syncController.test.ts`: failed upload does **not** update base.
+13. ⬜ Use `scripts/webdav-test.py`/`webdav-test-server.py` to seed a remote and
     verify bytes with `scripts/webdav-test.py status` (accepted suggestion #8).
-14. Verify Android interop: a db written by the web app must open in the Android
+    _Deferred to Phase 8 — needs a running WebDAV/Nextcloud._
+14. ⬜ Verify Android interop: a db written by the web app must open in the Android
     app and vice versa (same file, same format).
-15. Document the sync flow in README with a sequence diagram.
+    _Deferred to Phase 8 — needs a real file exchange._
+15. ✅ Document the sync flow in README with a sequence diagram.
 16. ✅ Verify: `npm test` green; a real sync against a local Nextcloud leaves the
     remote md5 equal to the local md5 after upload.
+    _(`npm test` green; the live md5 check is deferred to Phase 8.)_
+
+> Implemented in commit `734ad13`. Verified: `npm test` → 86 passing (10 files),
+> `npm run build` → `js/upm.js`, `npm run typecheck` clean.
+> Deviations: `sync(local, password)` — the "key" is the **master password**
+> (per-file AES keys are derived from it together with each file's own salt, so a
+> single derived key cannot decrypt both the local and the remote file);
+> `PasswordDatabase.toBytes()` added so sync can re-upload an unchanged database
+> without bumping the revision (mirrors Android, which uploads the current file
+> without saving); the result "toast" uses Nextcloud's core `OC.Notification`
+> API so the bundle still ships no stylesheet (a styled `@nextcloud/dialogs`
+> toast needs the CSS output path wired first); steps 13–14 and step 16's live
+> check are deferred to Phase 8.
 
 ---
 
