@@ -20,29 +20,33 @@ Legend: ✅ done · ⬜ todo
 
 ---
 
-## Phase 0 — Repository & toolchain scaffolding (12 steps)
+## Phase 0 — Repository & toolchain scaffolding (12 steps) ✅
 
 Goal: a TypeScript library skeleton with tests, independent of Nextcloud.
 
-1. Create `package.json` with `"type": "module"`, scripts `test` (vitest run),
+1. ✅ Create `package.json` with `"type": "module"`, scripts `test` (vitest run),
    `typecheck` (tsc --noEmit), `build` (later). Set `engines.node >= 20`.
-2. `npm i -D typescript vitest @types/node` and `npm i -D @vitest/coverage-v8`.
-3. Create `tsconfig.json`: `strict: true`, `target: ES2022`, `module: ESNext`,
+2. ✅ `npm i -D typescript vitest @types/node` and `npm i -D @vitest/coverage-v8`.
+3. ✅ Create `tsconfig.json`: `strict: true`, `target: ES2022`, `module: ESNext`,
    `moduleResolution: bundler`, `lib: ["ES2022", "DOM"]`, `types: ["node"]`.
-4. Create `vitest.config.ts` with `test.include: ['tests/**/*.test.ts']`.
-5. Create `src/`, `tests/` directories; add a trivial `src/index.ts` exporting
+4. ✅ Create `vitest.config.ts` with `test.include: ['tests/**/*.test.ts']`.
+5. ✅ Create `src/`, `tests/` directories; add a trivial `src/index.ts` exporting
    nothing yet so `tsc` passes.
-6. Verify `scripts/test.db` + `scripts/test.db.password` are present
+6. ✅ Verify `scripts/test.db` + `scripts/test.db.password` are present
    (`scripts/install-cachyos.sh` copies them; else `bash tmp/copy_assets.sh`).
-7. Confirm Node has WebCrypto: run
+7. ✅ Confirm Node has WebCrypto: run
    `node -e "console.log(!!globalThis.crypto?.subtle)"` → must print `true`.
-8. Add `tests/helpers/bytes.ts` with `toHex`, `fromHex`, `concat`, `repeatTo`,
+8. ✅ Add `tests/helpers/bytes.ts` with `toHex`, `fromHex`, `concat`, `repeatTo`,
    `utf16beWithNullTerminator` (specs in `doc/crypto.md`).
-9. Add `.editorconfig` (2 spaces, LF, UTF-8) and extend `.gitignore` with
+9. ✅ Add `.editorconfig` (2 spaces, LF, UTF-8) and extend `.gitignore` with
    `node_modules/`, `dist/`, `coverage/`.
-10. Commit baseline: "scaffold TypeScript library".
-11. Add `README.md` with the `npm test` / `npx tsc --noEmit` commands.
+10. ✅ Commit baseline: "scaffold TypeScript library".
+11. ✅ Add `README.md` with the `npm test` / `npx tsc --noEmit` commands.
 12. ✅ Verify: `npm test` runs (0 tests OK) and `npx tsc --noEmit` passes.
+
+> Implemented in commit `031f5cc`. Added `tests/helpers/bytes.test.ts` (8
+> assertions) so the scaffold is exercised; `npm test` → 8 passed,
+> `npm run typecheck` → clean.
 
 ---
 
