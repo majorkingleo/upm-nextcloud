@@ -10,9 +10,9 @@ forwards the opaque encrypted file.
 
 ## Status
 
-Phase 0 — repository & toolchain scaffolding. The project is currently a plain
-TypeScript library skeleton (`src/` + `tests/`), built up phase by phase before
-any Nextcloud scaffolding is added.
+Phase 1 — crypto layer (PKCS#12 KDF + AES-256-CBC), verified against
+`scripts/test.db`. The project is a plain TypeScript library (`src/` +
+`tests/`), built up phase by phase before any Nextcloud scaffolding is added.
 
 ## Development
 
@@ -27,8 +27,25 @@ npm run typecheck  # tsc --noEmit (alias: npx tsc --noEmit)
 
 The crypto/format library lives in `src/`; tests live in `tests/`.
 
-## Fixtures
+## Fixtures & crypto verification
 
-`scripts/test.db` is a known-answer UPM v3 database (password in
-`scripts/test.db.password`, `test123`) used by the crypto round-trip tests.
-It is decrypted independently by `bash tmp/verify_kdf.sh` as a cross-check.
+`scripts/test.db` is a known-answer UPM v3 database (master password `test123`,
+read from `scripts/test.db.password`) used by the crypto round-trip tests.
+
+The KDF/AES implementation is checked against the verified vectors in
+`doc/crypto.md` (key `4fe00896…`, IV `3c61f5bc…`). An independent cross-check
+(pure Python + `openssl`, kept out of git under `tmp/`) recomputes the same
+values:
+
+```bash
+bash tmp/verify_kdf.sh
+```
+
+For the bundled fixture it prints:
+
+```
+salt: ee95963f61e72735
+key: 4fe00896368c69f9e3f3a79d3071dd8d09b5d582acec8e56742b0f4352728292
+iv:  3c61f5bce260900a03de0f9e1083ab97
+plaintext (53 bytes): 3030303132…000474657374
+```
