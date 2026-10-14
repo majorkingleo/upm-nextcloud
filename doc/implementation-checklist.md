@@ -50,159 +50,195 @@ Goal: a TypeScript library skeleton with tests, independent of Nextcloud.
 
 ---
 
-## Phase 1 — Crypto layer: PKCS#12 KDF + AES-CBC (14 steps)
+## Phase 1 — Crypto layer: PKCS#12 KDF + AES-CBC (14 steps) ✅
 
 Goal: reproduce the Android crypto in TypeScript, byte-for-byte.
 
-1. `src/crypto/kdf.ts`: implement `pkcs12Block(idByte, password, salt, iterations)`
+1. ✅ `src/crypto/kdf.ts`: implement `pkcs12Block(idByte, password, salt, iterations)`
    and `deriveKeyAndIv(password, salt)` exactly as in `doc/crypto.md` (SHA-256,
    20 iterations, key id=1 → 32 bytes, IV id=2 → 16 bytes).
-2. `src/crypto/cipher.ts`: `decryptDatabase(bytes, password)` — assert `UPM`
+2. ✅ `src/crypto/cipher.ts`: `decryptDatabase(bytes, password)` — assert `UPM`
    magic + version `0x03`, read salt (offset 4..12), AES-CBC decrypt payload.
-3. `src/crypto/cipher.ts`: `encryptDatabase(payload, password, salt)` — AES-CBC
+3. ✅ `src/crypto/cipher.ts`: `encryptDatabase(payload, password, salt)` — AES-CBC
    encrypt, then write `UPM` + `0x03` + salt + ciphertext.
-4. `src/crypto/cipher.ts`: `isPasswordDatabase(bytes)` (checks `UPM` magic).
-5. `src/crypto/cipher.ts`: `newSalt()` → `crypto.getRandomValues(new Uint8Array(8))`.
-6. Add clear errors: `InvalidPasswordError` (wrap WebCrypto padding
+4. ✅ `src/crypto/cipher.ts`: `isPasswordDatabase(bytes)` (checks `UPM` magic).
+5. ✅ `src/crypto/cipher.ts`: `newSalt()` → `crypto.getRandomValues(new Uint8Array(8))`.
+6. ✅ Add clear errors: `InvalidPasswordError` (wrap WebCrypto padding
    `OperationError`), `NotAPasswordDatabaseError`, `UnsupportedVersionError`.
-7. `tests/crypto/kdf.test.ts`: assert the derived key/IV equal the verified
+7. ✅ `tests/crypto/kdf.test.ts`: assert the derived key/IV equal the verified
    vectors in `doc/crypto.md` (key `4fe00896…`, IV `3c61f5bc…` for `test123`).
-8. `tests/crypto/cipher.test.ts`: decrypt `scripts/test.db` → expect fields
+8. ✅ `tests/crypto/cipher.test.ts`: decrypt `scripts/test.db` → expect fields
    `revision=2`, account `test`/`test`/`bYxwbP1r` (read fixture with
    `fs.readFileSync`).
-9. `tests/crypto/cipher.test.ts`: wrong password `"nope"` throws
+9. ✅ `tests/crypto/cipher.test.ts`: wrong password `"nope"` throws
    `InvalidPasswordError`.
-10. `tests/crypto/cipher.test.ts`: corrupt header throws `NotAPasswordDatabaseError`.
-11. `tests/crypto/cipher.test.ts`: round-trip — decrypt then re-encrypt with the
+10. ✅ `tests/crypto/cipher.test.ts`: corrupt header throws `NotAPasswordDatabaseError`.
+11. ✅ `tests/crypto/cipher.test.ts`: round-trip — decrypt then re-encrypt with the
     same salt reproduces the original file byte-identically.
-12. `tests/crypto/cipher.test.ts`: version byte `0x02` still decrypts (v2 differs
+12. ✅ `tests/crypto/cipher.test.ts`: version byte `0x02` still decrypts (v2 differs
     only in field charset — handled in Phase 3).
-13. Add `tmp/verify_kdf.sh` output check to the README as a manual cross-check.
+13. ✅ Add `tmp/verify_kdf.sh` output check to the README as a manual cross-check.
 14. ✅ Verify: `npm test` green; all crypto tests pass.
+
+> Implemented in commit `4c6edd1`. Deviations: byte helpers moved to
+> `src/util/bytes.ts` (shared; `tests/helpers/bytes.ts` now re-exports them);
+> added `src/crypto/errors.ts`; an `asBufferSource()` helper bridges TS 7's
+> `Uint8Array<ArrayBufferLike>` vs WebCrypto `BufferSource`; `decryptDatabase`
+> accepts versions 2 and 3. 20 tests green.
 
 ---
 
-## Phase 2 — Flat-pack codec (10 steps)
+## Phase 2 — Flat-pack codec (10 steps) ✅
 
 Goal: serialize/deserialize the length-prefixed field stream.
 
-1. `src/format/flatpack.ts`: `packString(s)` → `4-digit length + UTF-8 bytes`
+1. ✅ `src/format/flatpack.ts`: `packString(s)` → `4-digit length + UTF-8 bytes`
    (zero-padded, e.g. `0005hello`).
-2. `src/format/flatpack.ts`: `packInt(n)` → `packString(String(n))`.
-3. `src/format/reader.ts`: `FlatPackReader` over a `Uint8Array` with a position
+2. ✅ `src/format/flatpack.ts`: `packInt(n)` → `packString(String(n))`.
+3. ✅ `src/format/reader.ts`: `FlatPackReader` over a `Uint8Array` with a position
    cursor; `readString()`, `readInt()`, and a `readEof()` that throws on clean
    end-of-stream (mirrors Java `EOFException`).
-4. `src/format/reader.ts`: throw `ProblemReadingDatabaseFile` (clean error) when
+4. ✅ `src/format/reader.ts`: throw `ProblemReadingDatabaseFile` (clean error) when
    the 4 length digits are not a number.
-5. `src/format/writer.ts`: `FlatPackWriter` accumulating `Uint8Array` chunks.
-6. `tests/format/flatpack.test.ts`: round-trip `""`, `"test"`, unicode
+5. ✅ `src/format/writer.ts`: `FlatPackWriter` accumulating `Uint8Array` chunks.
+6. ✅ `tests/format/flatpack.test.ts`: round-trip `""`, `"test"`, unicode
    (`"pässwörd✓"`), long strings (> 9999 bytes), and integers.
-7. `tests/format/flatpack.test.ts`: a field whose content is shorter than the
+7. ✅ `tests/format/flatpack.test.ts`: a field whose content is shorter than the
    declared length throws a clean error (truncation), not a crash.
-8. `tests/format/reader.test.ts`: reading past EOF throws.
-9. `tests/format/writer.test.ts`: writer output equals manual concatenation.
+8. ✅ `tests/format/reader.test.ts`: reading past EOF throws.
+9. ✅ `tests/format/writer.test.ts`: writer output equals manual concatenation.
 10. ✅ Verify: `npm test` green; codec tests pass.
+
+> Implemented in commit `9a711f0`. Deviation: fields are capped at 9999 bytes —
+> Java's `Util.lpad` never truncates, so a longer field would write a 5-digit
+> prefix and corrupt the stream. `packString` therefore *throws* beyond 9999, and
+> step 6 tests a 9999-byte round-trip plus the >9999 rejection.
 
 ---
 
-## Phase 3 — Data model (14 steps)
+## Phase 3 — Data model (14 steps) ✅
 
 Goal: `PasswordDatabase` and friends, loading `scripts/test.db`.
 
-1. `src/format/account.ts`: `AccountInformation` with fields `accountName`,
+1. ✅ `src/format/account.ts`: `AccountInformation` with fields `accountName`,
    `userId`, `password`, `url`, `notes`; `flatPack(writer)` and
    `assemble(reader)` in that exact order.
-2. `src/format/account.ts`: `equals(other)` comparing all five fields.
-3. `src/format/options.ts`: `DatabaseOptions` (`remoteLocation`, `authDBEntry`);
+2. ✅ `src/format/account.ts`: `equals(other)` comparing all five fields.
+3. ✅ `src/format/options.ts`: `DatabaseOptions` (`remoteLocation`, `authDBEntry`);
    setters normalize `null`/`undefined` → `""` (matches Java).
-4. `src/format/revision.ts`: `Revision` with `get`, `increment`, `set`.
-5. `src/format/passwordDatabase.ts`: `load(bytes, secretKeyOrPassword)` — parse
+4. ✅ `src/format/revision.ts`: `Revision` with `get`, `increment`, `set`.
+5. ✅ `src/format/passwordDatabase.ts`: `load(bytes, secretKeyOrPassword)` — parse
    header, decrypt (via Phase 1), then read Revision, DatabaseOptions, and
    accounts until clean EOF.
-6. `src/format/passwordDatabase.ts`: `save()` — write Revision (increment),
+6. ✅ `src/format/passwordDatabase.ts`: `save()` — write Revision (increment),
    DatabaseOptions, accounts into a writer, encrypt with the stored salt, prepend
    `UPM` + version.
-7. `src/format/passwordDatabase.ts`: `addAccount`, `deleteAccount`,
+7. ✅ `src/format/passwordDatabase.ts`: `addAccount`, `deleteAccount`,
    `getAccount`, `getAccounts`, `getAccountNames` (case-insensitive sorted).
-8. `src/format/passwordDatabase.ts`: `setRevision(n)` (needed by the merge).
-9. `src/format/passwordDatabase.ts`: file-less constructor
+8. ✅ `src/format/passwordDatabase.ts`: `setRevision(n)` (needed by the merge).
+9. ✅ `src/format/passwordDatabase.ts`: file-less constructor
    `new PasswordDatabase(encryption, options)` for the merge result.
-10. `src/format/passwordDatabase.ts`: version handling — v3 reads/writes UTF-8;
+10. ✅ `src/format/passwordDatabase.ts`: version handling — v3 reads/writes UTF-8;
     v2 reads with the system default charset (use `TextDecoder('windows-1252')`
     fallback) and is upgraded to v3 on save. v1 (legacy DES) throws a clear
     "legacy DES databases are not supported in the browser" error (WebCrypto
     has no DES).
-11. `tests/format/passwordDatabase.test.ts`: load `scripts/test.db` → one account
+11. ✅ `tests/format/passwordDatabase.test.ts`: load `scripts/test.db` → one account
     with the expected fields, revision 2, empty options.
-12. `tests/format/passwordDatabase.test.ts`: save() → reload → identical data;
+12. ✅ `tests/format/passwordDatabase.test.ts`: save() → reload → identical data;
     revision increments on save.
-13. `tests/format/passwordDatabase.test.ts`: add/delete/get accounts and sorted
+13. ✅ `tests/format/passwordDatabase.test.ts`: add/delete/get accounts and sorted
     name listing.
 14. ✅ Verify: `npm test` green; a full load/save round-trip on `test.db` is
     byte-identical when nothing changed except the revision.
 
+> Implemented in commit `3188f56`. Deviations: `load(bytes, password)` (no
+> "secretKey" concept in the browser API); a file without the `UPM` magic throws
+> a `ProblemReadingDatabaseFile` whose message notes that legacy pre-v2 DES
+> databases can't be opened; added `tests/format/model.test.ts` (account/options/
+> revision units). Verified: `setRevision(1); save()` reproduces `test.db`
+> byte-for-byte.
+
 ---
 
-## Phase 4 — Three-way merge (14 steps)
+## Phase 4 — Three-way merge (14 steps) ✅
 
 Goal: a 1:1 port of `DatabaseMerger` (see `docs/database-conflict-merge-plan.md`).
 
-1. `src/merge/merger.ts`: `merge(base, local, remote): MergeResult` following
+1. ✅ `src/merge/merger.ts`: `merge(base, local, remote): MergeResult` following
    `DatabaseMerger.merge` exactly.
-2. Implement `toMap(db)` keying accounts by name.
-3. Implement the union-of-names iteration and the in-B/in-L/in-R decision table
+2. ✅ Implement `toMap(db)` keying accounts by name.
+3. ✅ Implement the union-of-names iteration and the in-B/in-L/in-R decision table
    (§3 of the merge plan).
-4. Implement `renamedCopy` with the `" (remote)"` suffix and numeric suffix on
+4. ✅ Implement `renamedCopy` with the `" (remote)"` suffix and numeric suffix on
    collision (`"name (remote 2)"`).
-5. Implement `accountsEqual(a, b)` (name + all five fields, ignore options).
-6. Implement `copyOf(options)` for `DatabaseOptions`.
-7. Set merged revision = `max(local.rev, remote.rev) + 1`.
-8. Always take `DatabaseOptions` from the **local** database.
-9. `MergeResult` type: `{ merged, uploadRequired, accountCount, conflictCount }`.
-10. `tests/merge/merger.test.ts`: port the full matrix from the merge plan
+5. ✅ Implement `accountsEqual(a, b)` (name + all five fields, ignore options).
+6. ✅ Implement `copyOf(options)` for `DatabaseOptions`.
+7. ✅ Set merged revision = `max(local.rev, remote.rev) + 1`.
+8. ✅ Always take `DatabaseOptions` from the **local** database.
+9. ✅ `MergeResult` type: `{ merged, uploadRequired, accountCount, conflictCount }`.
+10. ✅ `tests/merge/merger.test.ts`: port the full matrix from the merge plan
     (rows 1–10) plus the both-added-identically and both-deleted cases.
-11. Add collision test: two conflicts on the same name produce
+11. ✅ Add collision test: two conflicts on the same name produce
     `"(remote)"` and `"(remote 2)"`.
-12. Add delete-vs-edit tests (keep the edit).
-13. Add `base = null` (empty) test.
+12. ✅ Add delete-vs-edit tests (keep the edit).
+13. ✅ Add `base = null` (empty) test.
 14. ✅ Verify: `npm test` green; merge tests pass.
+
+> Implemented in commit `28638fe`. Deviations: `merge` is a named export and
+> `MergeResult` an interface (Java: static method + nested class); the merged db
+> is built with `PasswordDatabase.createEmptyCopy()` so the master password stays
+> out of the public API. 21 merge cases green.
 
 ---
 
-## Phase 5 — Nextcloud PHP backend (16 steps)
+## Phase 5 — Nextcloud PHP backend (16 steps) ✅
 
 Goal: a minimal, crypto-free Nextcloud app that stores/returns the opaque file.
 
-1. `appinfo/info.xml`: id `upm`, namespace `UPM`, Nextcloud min-version 27,
+1. ✅ `appinfo/info.xml`: id `upm`, namespace `UPM`, Nextcloud min-version 27,
    max-version 30, route `upm.page.index`.
-2. `appinfo/routes.php`: register routes
+2. ✅ `appinfo/routes.php`: register routes
    `GET /` → `page#index`,
    `GET /db` → `db#get`,
    `PUT /db` → `db#put`,
    `DELETE /db` → `db#delete`,
    `GET /config` → `db#config`.
-3. `composer.json`: PSR-4 `OCA\\UPM\\` → `lib/`; `require php >= 8.1`.
-4. `lib/AppInfo/Application.php`: register `DbController` and `PageController`.
-5. `lib/Controller/DbController.php`: constructor takes `IRootFolder`,
+3. ✅ `composer.json`: PSR-4 `OCA\\UPM\\` → `lib/`; `require php >= 8.1`.
+4. ✅ `lib/AppInfo/Application.php`: register `DbController` and `PageController`.
+5. ✅ `lib/Controller/DbController.php`: constructor takes `IRootFolder`,
    `IAppConfig`, `IUserSession` (or `?IUser`), `IRequest`.
-6. `DbController::config()`: return JSON `{ userId, folder }` (no secrets).
-7. `DbController::get()`: read `<userFiles>/<folder>/upm.db` via
+6. ✅ `DbController::config()`: return JSON `{ userId, folder }` (no secrets).
+7. ✅ `DbController::get()`: read `<userFiles>/<folder>/upm.db` via
    `IRootFolder::getUserFolder()->get(...)`; return raw bytes (`DataResponse`
    with `Content-Type: application/octet-stream`) or 404 when absent.
-8. `DbController::put()`: write the raw request body to the file (create parent
+8. ✅ `DbController::put()`: write the raw request body to the file (create parent
    folder if needed); accept only when logged in (default app-framework auth).
-9. `DbController::delete()`: remove the file; 404 counts as success.
-10. Keep the folder path configurable via `IAppConfig` (default `upm`), so it
+9. ✅ `DbController::delete()`: remove the file; 404 counts as success.
+10. ✅ Keep the folder path configurable via `IAppConfig` (default `upm`), so it
     matches the Android app's WebDAV folder.
-11. `lib/Controller/PageController.php`: serve the frontend template/entry point.
-12. Add `@NoAdminRequired` and `@PublicPage` where appropriate (index may need
+11. ✅ `lib/Controller/PageController.php`: serve the frontend template/entry point.
+12. ✅ Add `@NoAdminRequired` and `@PublicPage` where appropriate (index may need
     `@NoCSRFRequired` only for the template route; data routes keep CSRF).
-13. No DB schema (`appinfo/database.xml` absent) — the app stores no tables.
-14. Create `templates/index.php` (or a static `main.php` shell) that loads the
+13. ✅ No DB schema (`appinfo/database.xml` absent) — the app stores no tables.
+14. ✅ Create `templates/index.php` (or a static `main.php` shell) that loads the
     built frontend bundle.
-15. Add `Makefile` with `composer install`, `php -l` lint, `npm run build`.
+15. ✅ Add `Makefile` with `composer install`, `php -l` lint, `npm run build`.
 16. ✅ Verify: `php -l` on every `lib/` file passes; `composer validate` passes.
     (Runtime verification against a live Nextcloud happens in Phase 8.)
+
+> Implemented in commit `64ac2a8`. Deviations (all correctness-driven): the
+> folder config uses `IConfig::getAppValue` instead of `IAppConfig` (the
+> `IAppConfig` API changed incompatibly in NC 29: `getValue`/`setValue` were
+> removed in favour of `getValueString`/`setValueString`, so no single method
+> works across 27–30); PHP attributes (`#[NoAdminRequired]`, `#[NoCSRFRequired]`)
+> instead of `@` annotations (available since NC 27); controllers are
+> auto-resolved from the routes rather than registered manually; the blob GET
+> uses `DataDisplayResponse` (raw bytes) whereas a plain `DataResponse` would
+> JSON-encode; the raw PUT body is read from the `put` stream (the framework
+> exposes binary bodies only as a one-shot stream). Added `img/app.svg` and the
+> `Makefile`. Verified: `php -l` (5 files) clean, `composer validate --strict`
+> valid.
 
 ---
 
