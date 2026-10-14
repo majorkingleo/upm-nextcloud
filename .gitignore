@@ -5,3 +5,6 @@ tmp/
 node_modules/
 dist/
 coverage/
+
+# PHP / Composer dependencies
+/vendor/

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>upm</id>
+    <name>UPM</name>
+    <summary>Open Universal Password Manager databases with client-side encryption</summary>
+    <description><![CDATA[
+Read and write Universal Password Manager (UPM) databases stored in your
+Nextcloud files. All encryption and decryption happens in your browser, so the
+Nextcloud server only ever stores the opaque encrypted file and never sees your
+master password.
+    ]]></description>
+    <version>0.1.0</version>
+    <licence>gpl</licence>
+    <author>UPM for Nextcloud contributors</author>
+    <namespace>UPM</namespace>
+    <category>security</category>
+    <dependencies>
+        <nextcloud min-version="27" max-version="30"/>
+        <php min-version="8.1"/>
+    </dependencies>
+    <navigations>
+        <navigation>
+            <name>UPM</name>
+            <route>upm.page.index</route>
+            <icon>app.svg</icon>
+        </navigation>
+    </navigations>
+</info>

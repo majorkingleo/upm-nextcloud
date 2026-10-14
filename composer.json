@@ -1,0 +1,18 @@
+{
+    "name": "upm/nextcloud-upm",
+    "description": "UPM for Nextcloud - open Universal Password Manager databases with all crypto in the browser",
+    "type": "project",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "OCA\\UPM\\": "lib/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}
