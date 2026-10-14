@@ -36,7 +36,7 @@ fi
 # --- helpers ---------------------------------------------------------------
 have() { command -v "$1" >/dev/null 2>&1; }
 
-sudo_pacman() { sudo pacman --noconfirm --needed "$@"; }
+sudo_pacman() { sudo pacman -S --noconfirm --needed "$@"; }
 
 aur_helper() {
   if have paru; then echo paru; elif have yay; then echo yay; else echo ""; fi
@@ -53,9 +53,9 @@ sudo_pacman nodejs npm pnpm
 
 # --- 3. PHP + Composer (for the Nextcloud backend) -------------------------
 echo "==> Installing PHP toolchain"
-sudo_pacman php composer \
-  php-gd php-sqlite php-intl php-curl php-mbstring \
-  php-xml php-zip php-bz2 php-fpm
+# Arch bundles curl, mbstring, xml, zip, bz2 and intl inside the main `php`
+# package; only a handful of extensions are split out (gd, sqlite, fpm, ...).
+sudo_pacman php composer php-fpm php-gd php-sqlite
 
 # --- 4. Docker (local Nextcloud test instance) -----------------------------
 echo "==> Installing Docker"
