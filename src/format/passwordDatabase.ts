@@ -128,6 +128,15 @@ export class PasswordDatabase {
     return this.salt.slice();
   }
 
+  /**
+   * Create a new, empty database that shares this database's encryption context
+   * (same master password and salt). Used by the conflict merge so the merged
+   * file stays decryptable with the same password.
+   */
+  createEmptyCopy(options: DatabaseOptions): PasswordDatabase {
+    return new PasswordDatabase({ password: this.password, salt: this.salt }, options);
+  }
+
   /** Read accounts until the payload ends cleanly (mirrors the Java EOF loop). */
   private readAccounts(reader: FlatPackReader): void {
     for (;;) {
