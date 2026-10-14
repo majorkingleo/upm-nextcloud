@@ -4,21 +4,24 @@
 import { EndOfStreamError, ProblemReadingDatabaseFile } from './errors';
 import { LENGTH_FIELD_NUM_CHARS } from './flatpack';
 
-const decoder = new TextDecoder('utf-8');
+const UTF8_DECODER = new TextDecoder('utf-8');
 const LENGTH_PREFIX_PATTERN = /^\d{4}$/;
 const INTEGER_PATTERN = /^-?\d+$/;
 
 /** Reads `"LLLL<bytes>"` fields from a byte array using a cursor. */
 export class FlatPackReader {
   private readonly bytes: Uint8Array;
+  private readonly decoder: TextDecoder;
   private position: number;
 
   /**
    * @param bytes the decrypted payload to read from.
    * @param position optional starting offset (defaults to the beginning).
+   * @param decoder optional text decoder (v2 databases use a non-UTF-8 charset).
    */
-  constructor(bytes: Uint8Array, position = 0) {
+  constructor(bytes: Uint8Array, position = 0, decoder: TextDecoder = UTF8_DECODER) {
     this.bytes = bytes;
+    this.decoder = decoder;
     this.position = position;
   }
 
@@ -53,7 +56,7 @@ export class FlatPackReader {
       throw new ProblemReadingDatabaseFile('A field length was truncated');
     }
 
-    const prefix = decoder.decode(
+    const prefix = this.decoder.decode(
       this.bytes.subarray(this.position, this.position + LENGTH_FIELD_NUM_CHARS),
     );
     this.position += LENGTH_FIELD_NUM_CHARS;
@@ -69,7 +72,7 @@ export class FlatPackReader {
       );
     }
 
-    const value = decoder.decode(
+    const value = this.decoder.decode(
       this.bytes.subarray(this.position, this.position + length),
     );
     this.position += length;
