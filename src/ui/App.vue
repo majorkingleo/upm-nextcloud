@@ -9,6 +9,7 @@ import { t } from '@nextcloud/l10n';
 import { lock, touch, unlocked } from '../state/session';
 import AccountsView from './AccountsView.vue';
 import ExportButton from './ExportButton.vue';
+import SyncButton from './SyncButton.vue';
 import UnlockView from './UnlockView.vue';
 
 function onLock(): void {
@@ -27,6 +28,7 @@ function onLock(): void {
     <template v-else>
       <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px">
         <button type="button" class="button" @click="onLock">{{ t('upm', 'Lock') }}</button>
+        <SyncButton />
         <ExportButton />
       </div>
       <AccountsView />

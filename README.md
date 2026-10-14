@@ -30,11 +30,40 @@ open-source password manager. It uses the same encrypted `.db` file format as
 UPM's Android and desktop apps, so you can keep using them side by side and
 sync the very same file.
 
+## Sync
+
+Sync merges your local database with the copy in your Nextcloud files instead of
+overwriting one with the other. A three-way merge against the last-synced state
+keeps edits from both sides; genuine conflicts are preserved as `"(remote)"`
+copies so nothing is lost.
+
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant IB as IndexedDB base
+  participant N as Nextcloud upm.db
+  B->>N: GET /apps/upm/db
+  alt no remote yet
+    B->>N: PUT local database
+  else remote present
+    B->>IB: read merge base
+    B->>B: merge(base, local, remote)
+    alt upload required (local changed / conflicts)
+      B->>N: PUT merged database
+    else only the remote changed
+      B->>B: keep the remote copy
+    else both sides agree
+      B->>B: nothing to transfer
+    end
+  end
+  B->>IB: write the new base (only after a converged sync)
+```
+
 ## Status
 
-**Work in progress.** The cryptographic core is implemented and verified
-against a known-answer UPM database; the Nextcloud app, browser UI and sync are
-still being built. See the phase-by-phase plan in
+Work in progress. The crypto/format library, the Nextcloud backend and the
+browser UI (unlock, edit, save, sync) are implemented; hardening, packaging and
+end-to-end tests remain. See the phase-by-phase plan in
 [`doc/implementation-checklist.md`](doc/implementation-checklist.md).
 
 ## Roadmap

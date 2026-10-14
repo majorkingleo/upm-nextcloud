@@ -11,6 +11,7 @@ import type { PasswordDatabase } from '../format/passwordDatabase';
 export const AUTO_LOCK_MS = 5 * 60 * 1000;
 
 const database = ref<PasswordDatabase | null>(null);
+const key = ref<string | null>(null);
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 /** True while a database is unlocked and held in memory. */
@@ -19,13 +20,17 @@ export const unlocked = computed(() => database.value !== null);
 /** The in-memory (decrypted) database, or null while locked. */
 export const currentDatabase = computed(() => database.value);
 
+/** The master password ("key") used to decrypt/encrypt, or null while locked. */
+export const currentKey = computed(() => key.value);
+
 /**
- * Keep the decrypted database in memory only. Note: JavaScript strings are
- * immutable, so the master password cannot be zeroed — only the references are
- * dropped on lock.
+ * Keep the decrypted database and its master key in memory only. Note:
+ * JavaScript strings are immutable, so the password cannot be zeroed — only the
+ * references are dropped on lock.
  */
-export function setDatabase(db: PasswordDatabase): void {
+export function setDatabase(db: PasswordDatabase, masterPassword: string): void {
   database.value = db;
+  key.value = masterPassword;
   touch();
 }
 
@@ -37,9 +42,10 @@ export function touch(): void {
   timer = setTimeout(lock, AUTO_LOCK_MS);
 }
 
-/** Drop the in-memory database and stop the auto-lock timer. */
+/** Drop the in-memory database/key and stop the auto-lock timer. */
 export function lock(): void {
   database.value = null;
+  key.value = null;
   if (timer !== null) {
     clearTimeout(timer);
     timer = null;

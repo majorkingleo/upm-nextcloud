@@ -69,6 +69,20 @@ export class PasswordDatabase {
   /** Serialise and encrypt the database, bumping the revision first. */
   async save(): Promise<Uint8Array> {
     this.revision.increment();
+    return this.serialise();
+  }
+
+  /**
+   * Serialise and encrypt the database **without** touching the revision. Used
+   * by sync to re-upload an unchanged database (mirrors the Android app, which
+   * uploads the current file without saving).
+   */
+  async toBytes(): Promise<Uint8Array> {
+    return this.serialise();
+  }
+
+  /** Flat-pack revision + options + accounts and encrypt them. */
+  private async serialise(): Promise<Uint8Array> {
     const writer = new FlatPackWriter();
     this.revision.flatPack(writer);
     this.dbOptions.flatPack(writer);

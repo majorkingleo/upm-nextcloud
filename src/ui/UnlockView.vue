@@ -30,6 +30,7 @@ async function unlock(): Promise<void> {
       validateStatus: (status) => status === 200 || status === 404,
     });
 
+    const masterPassword = password.value;
     let db: PasswordDatabase;
     if (response.status === 404) {
       // No database yet: start a fresh, empty one (persisted on first save).
@@ -39,7 +40,7 @@ async function unlock(): Promise<void> {
     }
 
     password.value = '';
-    setDatabase(db);
+    setDatabase(db, masterPassword);
   } catch (err) {
     error.value =
       err instanceof InvalidPasswordError
