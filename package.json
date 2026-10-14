@@ -1,0 +1,22 @@
+{
+  "name": "upm-nextcloud",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Universal Password Manager (UPM) database reader/writer for Nextcloud, with all crypto in the browser",
+  "license": "GPL-2.0-or-later",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@vitest/coverage-v8": "^5.0.4",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.4"
+  }
+}

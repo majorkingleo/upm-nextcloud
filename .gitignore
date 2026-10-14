@@ -1,2 +1,7 @@
 # Temporary working files (verification scripts, scratch output)
 tmp/
+
+# Node / TypeScript build artefacts
+node_modules/
+dist/
+coverage/
