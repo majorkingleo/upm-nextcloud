@@ -108,8 +108,13 @@ function remove(): void {
 
 <template>
   <div class="upm-accounts">
-    <div style="display: flex; gap: 8px; margin-bottom: 12px">
-      <input v-model="search" type="search" :placeholder="t('upm', 'Search')" />
+    <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center">
+      <input
+        v-model="search"
+        type="search"
+        :placeholder="t('upm', 'Search')"
+        style="width: 220px; box-sizing: border-box"
+      />
       <button type="button" class="button" @click="addNew">{{ t('upm', 'New account') }}</button>
       <button type="button" class="button primary" :disabled="busy" @click="save">
         {{ busy ? t('upm', 'Saving…') : t('upm', 'Save') }}
@@ -118,8 +123,17 @@ function remove(): void {
 
     <p v-if="status">{{ status }}</p>
 
-    <div style="display: flex; gap: 20px; align-items: flex-start">
-      <ul style="list-style: none; padding: 0; margin: 0; min-width: 220px">
+    <div style="display: flex; gap: 24px; align-items: flex-start">
+      <ul
+        style="
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          flex: 0 0 220px;
+          width: 220px;
+          overflow-wrap: anywhere;
+        "
+      >
         <li v-for="name in names" :key="name" style="margin-bottom: 4px">
           <button
             type="button"

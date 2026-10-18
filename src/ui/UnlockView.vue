@@ -67,6 +67,7 @@ async function unlock(): Promise<void> {
         type="password"
         autocomplete="current-password"
         :disabled="busy"
+        :aria-invalid="error !== ''"
       />
     </p>
 
@@ -74,6 +75,20 @@ async function unlock(): Promise<void> {
       {{ busy ? t('upm', 'Unlocking…') : t('upm', 'Unlock') }}
     </button>
 
-    <p v-if="error" style="color: var(--color-error)">{{ error }}</p>
+    <p
+      v-if="error"
+      role="alert"
+      aria-live="assertive"
+      style="
+        margin: 12px 0 0;
+        padding: 8px 12px;
+        background-color: var(--color-main-background, #fff);
+        color: var(--color-error-text, #a30000);
+        border-left: 4px solid var(--color-error, #a30000);
+        border-radius: var(--border-radius, 4px);
+        font-weight: bold;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      "
+    >{{ error }}</p>
   </form>
 </template>

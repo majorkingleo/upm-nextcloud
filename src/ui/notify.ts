@@ -3,11 +3,11 @@
 // is styled by Nextcloud's own CSS — so the bundle needs no stylesheet.
 
 interface OcNotificationApi {
-  showTemporary?(message: string, timeout?: number): void;
+  showTemporary?(message: string, options?: { timeout?: number }): void;
 }
 
 /** Show a short-lived Nextcloud notification; a no-op outside Nextcloud. */
 export function notify(message: string): void {
   const oc = (globalThis as { OC?: { Notification?: OcNotificationApi } }).OC;
-  oc?.Notification?.showTemporary?.(message, 5000);
+  oc?.Notification?.showTemporary?.(message, { timeout: 5000 });
 }

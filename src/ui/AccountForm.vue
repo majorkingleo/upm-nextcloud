@@ -15,43 +15,68 @@ const showPassword = ref(false);
 </script>
 
 <template>
-  <form class="upm-form" style="min-width: 280px" @submit.prevent="emit('save')">
-    <h3>{{ t('upm', 'Account') }}</h3>
+  <form
+    class="upm-form"
+    style="
+      display: grid;
+      grid-template-columns: max-content minmax(220px, 1fr);
+      gap: 8px 12px;
+      align-items: center;
+    "
+    @submit.prevent="emit('save')"
+  >
+    <h3 style="grid-column: 1 / -1; margin: 0 0 4px">{{ t('upm', 'Account') }}</h3>
 
-    <p>
-      <label>{{ t('upm', 'Name') }}
-        <input v-model="account.accountName" type="text" required />
-      </label>
-    </p>
+    <label for="upm-account-name" style="text-align: right">{{ t('upm', 'Name') }}</label>
+    <input
+      id="upm-account-name"
+      v-model="account.accountName"
+      type="text"
+      required
+      style="width: 100%; box-sizing: border-box"
+    />
 
-    <p>
-      <label>{{ t('upm', 'User ID') }}
-        <input v-model="account.userId" type="text" />
-      </label>
-    </p>
+    <label for="upm-account-user" style="text-align: right">{{ t('upm', 'User ID') }}</label>
+    <input
+      id="upm-account-user"
+      v-model="account.userId"
+      type="text"
+      style="width: 100%; box-sizing: border-box"
+    />
 
-    <p>
-      <label>{{ t('upm', 'Password') }}
-        <input v-model="account.password" :type="showPassword ? 'text' : 'password'" />
-      </label>
+    <label for="upm-account-password" style="text-align: right">{{ t('upm', 'Password') }}</label>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <input
+        id="upm-account-password"
+        v-model="account.password"
+        :type="showPassword ? 'text' : 'password'"
+        style="flex: 1 1 auto; min-width: 0; width: 100%; box-sizing: border-box"
+      />
       <button type="button" class="button" @click="showPassword = !showPassword">
         {{ showPassword ? t('upm', 'Hide') : t('upm', 'Show') }}
       </button>
-    </p>
+    </div>
 
-    <p>
-      <label>{{ t('upm', 'URL') }}
-        <input v-model="account.url" type="text" />
-      </label>
-    </p>
+    <label for="upm-account-url" style="text-align: right">{{ t('upm', 'URL') }}</label>
+    <input
+      id="upm-account-url"
+      v-model="account.url"
+      type="text"
+      style="width: 100%; box-sizing: border-box"
+    />
 
-    <p>
-      <label>{{ t('upm', 'Notes') }}
-        <textarea v-model="account.notes" rows="3" />
-      </label>
-    </p>
+    <label
+      for="upm-account-notes"
+      style="text-align: right; align-self: start; padding-top: 6px"
+    >{{ t('upm', 'Notes') }}</label>
+    <textarea
+      id="upm-account-notes"
+      v-model="account.notes"
+      rows="3"
+      style="width: 100%; box-sizing: border-box; resize: vertical"
+    />
 
-    <div style="display: flex; gap: 8px">
+    <div style="grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 4px">
       <button type="submit" class="button primary">{{ t('upm', 'Save') }}</button>
       <button type="button" class="button" @click="emit('cancel')">{{ t('upm', 'Cancel') }}</button>
       <button type="button" class="button" @click="emit('delete')">{{ t('upm', 'Delete') }}</button>
