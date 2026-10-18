@@ -156,3 +156,14 @@ key: 4fe00896368c69f9e3f3a79d3071dd8d09b5d582acec8e56742b0f4352728292
 iv:  3c61f5bce260900a03de0f9e1083ab97
 plaintext (53 bytes): 3030303132…000474657374
 ```
+
+## License
+
+GPL-2.0-or-later — see [`LICENSE`](LICENSE).
+
+This project is largely AI-generated ("vibe coded"), but it is **not**
+independent work: it is a browser front-end for
+[Universal Password Manager](https://upm.sourceforge.net/) and ports UPM's file
+format, sync semantics and three-way merge. Those parts are derived from UPM,
+which is distributed under the GNU General Public License version 2 or later,
+so this project carries the same license.
