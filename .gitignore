@@ -1,6 +1,9 @@
 # Temporary working files (verification scripts, scratch output)
 tmp/
 
+# Local Nextcloud dev instance (compose file + generated state)
+.dev/
+
 # Node / TypeScript build artefacts
 node_modules/
 dist/

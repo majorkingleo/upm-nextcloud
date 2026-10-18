@@ -7,6 +7,12 @@ import vue from '@vitejs/plugin-vue';
 // No CSS is emitted: the UI uses Nextcloud's built-in classes and inline styles.
 export default defineConfig({
   plugins: [vue()],
+  // Vue (and some @nextcloud deps) ship ESM-bundler builds that leave
+  // `process.env.NODE_ENV` for the bundler to replace. Vite's lib mode does
+  // not do that, and the browser has no `process`, so define it explicitly.
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production'),
+  },
   build: {
     outDir: 'js',
     emptyOutDir: false,

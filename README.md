@@ -87,6 +87,27 @@ npm run typecheck  # tsc --noEmit
 
 The library lives in `src/`; tests live in `tests/`.
 
+### Local Nextcloud instance
+
+Start a throwaway Nextcloud 28 (SQLite, `admin` / `admin`) with this checkout
+mounted as the `upm` app:
+
+```bash
+bash scripts/start-nextcloud.sh          # start, wait for install, enable UPM
+bash scripts/start-nextcloud.sh --reset  # wipe the dev volume and start over
+bash scripts/start-nextcloud.sh --stop   # stop, keep the data volume
+bash scripts/start-nextcloud.sh --logs   # follow the container log
+```
+
+Then open <http://localhost:8080/index.php/apps/upm/>. The compose file is
+generated into `.dev/` (git-ignored).
+
+After frontend changes, run `bash scripts/build-frontend.sh` and reload with the
+browser cache disabled — Nextcloud appends a fixed `?v=` cache-buster to
+`js/upm.js`, so a plain reload can keep serving the old bundle. The script also
+fails the build if `process.env.NODE_ENV` is left unresolved (Vite lib mode does
+not replace it, and the browser has no `process`).
+
 * Architecture & decisions: [`doc/plan.md`](doc/plan.md)
 * Build plan: [`doc/implementation-checklist.md`](doc/implementation-checklist.md)
 * Crypto reference (verified byte-for-byte): [`doc/crypto.md`](doc/crypto.md)
