@@ -72,6 +72,7 @@ end-to-end tests remain. See the phase-by-phase plan in
 * Add, edit and delete accounts.
 * Sync against the same `upm.db` your UPM app uses — a three-way merge keeps
   edits from both sides and saves conflicts as copies.
+* Keep several databases at any location in your files and switch between them.
 * Export an encrypted copy of the database for backup.
 
 ## Development

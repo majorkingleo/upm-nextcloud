@@ -371,6 +371,86 @@ Goal: port the sync flow (download → merge → upload) with IndexedDB base/bac
 
 ---
 
+## Phase 9 — Multiple databases (21 steps)
+
+Goal: keep several `*.db` files at any location inside the user's Nextcloud
+files and switch between them without mixing their sync state.
+
+**Decisions**
+- **Identity** = the Nextcloud **file id** (stable across rename/move); the path
+  is used only to create a file and to display it.
+- **Registry** = client-side (IndexedDB) list of descriptors (`id`, `label`,
+  `path`, `lastOpenedAt`). The server stays stateless: it lists what is on
+  disk, nothing more. Paths are not secret, but there is nothing worth
+  persisting server-side.
+- **One unlocked database at a time** — switching re-locks, so only one master
+  password is ever in memory.
+
+### Backend
+
+1. ⬜ `lib/Controller/DbController.php`: add `resolveNode(string $path, bool $write)`
+   — trim/normalize, reject `..`, absolute paths and non-`.db` names; resolve via
+   `$userFolder->get()`; 404 when missing, 403 when `isUpdateable()` is false.
+2. ⬜ `DbController::list()` — `GET /apps/upm/databases`: scan the configured
+   root folder for `*.db` (non-recursive) and return
+   `[{ fileId, path, name, size, mtime, canWrite }]`.
+3. ⬜ `DbController::getFile(int $fileId)` — `GET /apps/upm/databases/{fileId}`:
+   `getFirstNodeById()`, verify the node lies inside the user folder, return raw
+   bytes (404 when gone).
+4. ⬜ `DbController::putFile(int $fileId)` — `PUT .../{fileId}`: same lookup,
+   403 on read-only shares, 400 on an empty body.
+5. ⬜ `DbController::createDatabase()` — `POST /apps/upm/databases?path=…`: read
+   the raw body, create missing parent folders, write the file, respond
+   `{ fileId, path }`.
+6. ⬜ `DbController::deleteFile(int $fileId)` — `DELETE .../{fileId}`; a missing
+   file counts as success.
+7. ⬜ Keep `GET/PUT/DELETE /apps/upm/db` as aliases for the default
+   `upm/upm.db` (Android compatibility, existing bookmarks); mark them
+   deprecated in the docblock.
+8. ⬜ `appinfo/routes.php`: register the new routes (numeric `{fileId}`
+   requirement); `config()` also returns `defaultFolder` and the default
+   descriptor when the file exists.
+9. ⬜ Verify with curl against the dev instance (app password): 200 by id, 404
+   for a missing id, 403 for a read-only share, 400 for `../x.db`.
+
+### Frontend
+
+10. ⬜ `src/storage/descriptor.ts`: `DatabaseDescriptor` + helpers
+    (`labelFromPath`, `sameDatabase`).
+11. ⬜ `src/storage/remote.ts`: `listDatabases()`, `getDb(descriptor)`,
+    `putDb(descriptor, bytes)`, `createDatabase(path, bytes)`,
+    `deleteDb(descriptor)`; 403 → typed `ReadOnlyError`, 404 → `null`.
+12. ⬜ `src/storage/registry.ts`: IndexedDB store of descriptors +
+    `lastOpenedId`; `remember`, `relabel`, `forget`; bootstrap the default
+    database on first run.
+13. ⬜ `src/storage/syncBase.ts`: key everything by id (`${id}:base`,
+    `${id}:conflict-<iso>`); migrate a legacy `base` record to the default id;
+    keep at most N conflict backups per database.
+14. ⬜ `src/sync/syncController.ts`: `sync(local, password, descriptor)`; pass the
+    descriptor to the storage calls (no merge changes).
+15. ⬜ `src/state/session.ts`: hold the active descriptor; expose
+    `activeDescriptor`; `lock()` clears the key but keeps the selection; persist
+    only `lastOpenedId` (never the password).
+16. ⬜ `src/ui/DatabasesView.vue`: list (label, path, size, `canWrite`), Open,
+    Add (file picker via `@nextcloud/dialogs`), Remove from list, relink on 404.
+17. ⬜ `src/ui/App.vue`: locked flow = DatabasesView (no selection) → UnlockView;
+    toolbar shows the active database and a "Change database" action.
+18. ⬜ `src/ui/UnlockView.vue`: title shows label + path; load by descriptor; a
+    404 on open offers "create this database".
+19. ⬜ `SyncButton` / `ExportButton`: operate on the active descriptor; export
+    uses the file name; a vanished file shows "file no longer available".
+20. ⬜ Tests: `tests/storage/registry.test.ts` (fake IndexedDB), a sync-isolation
+    test with two descriptor ids, a sync-base migration test; keep the existing
+    suite green.
+21. ⬜ Verify: `npm test`, `npm run typecheck`, `bash scripts/build-frontend.sh`;
+    in the browser create two databases, sync each, rename one in Files and
+    confirm it still opens by id, delete it and confirm the relink prompt.
+
+> Deferred: `If-Match`/ETag on PUT and `navigator.locks` to serialize two tabs
+> editing the same database (see plan §8).
+
+---
+
 ## Definition of done (overall)
 
 - [ ] The browser can open and edit a real UPM database without the password
@@ -378,4 +458,7 @@ Goal: port the sync flow (download → merge → upload) with IndexedDB base/bac
 - [ ] The PHP backend contains no crypto code and never sees the key.
 - [ ] A database written by the web app opens in the Android app and vice versa.
 - [ ] The three-way merge matrix passes in unit tests and on a live server.
+- [ ] Several databases can be opened from arbitrary locations in the user's
+      files; a rename/move in Files does not break the registry.
+- [ ] Sync state (base + conflict backups) is isolated per database.
 - [ ] All of `npm test`, `npx tsc --noEmit`, `composer validate`, `php -l` pass.
