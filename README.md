@@ -99,6 +99,48 @@ hardening, packaging and end-to-end tests remain. See the phase-by-phase plan in
 * Keep several databases at any location in your files and switch between them.
 * Export an encrypted copy of the database for backup.
 
+## Installation
+
+Requires **Nextcloud 27–34** and **PHP ≥ 8.1**. The app is not in the App Store,
+so it installs as a local app:
+
+```bash
+# on the Nextcloud server, from this checkout (or an extracted release archive)
+sudo bash scripts/install-app.sh /var/www/nextcloud
+```
+
+The script copies the app to `<root>/custom_apps/upm`, fixes ownership for the
+web server user and runs `occ app:enable upm`. Useful options:
+
+```bash
+sudo bash scripts/install-app.sh /var/www/nextcloud --web-user http   # Arch
+sudo bash scripts/install-app.sh /var/www/nextcloud --build           # rebuild js/upm.js first
+sudo bash scripts/install-app.sh /var/www/nextcloud --no-enable       # copy only
+```
+
+Then open `/index.php/apps/upm/`. The database folder defaults to `upm/` inside
+each user's files; change it with
+`occ config:app:set upm folder --value="Passwords"`.
+
+For a Nextcloud running in **Docker** (e.g. Nextcloud AIO), deploy from your
+workstation:
+
+```bash
+bash scripts/deploy-to-remote.sh user@host --sudo
+```
+
+It rebuilds `js/upm.js`, packages the app, copies it into the container (default
+`nextcloud-aio-nextcloud:/var/www/html/custom_apps/upm`), fixes ownership and
+enables it. Override the container, app dir or web user with `--container`,
+`--app-dir` and `--web-user`; `--no-enable` and `--no-build` are also available.
+
+To uninstall (disable the app and remove its code; users' `.db` files are left
+untouched):
+
+```bash
+bash scripts/deploy-to-remote.sh user@host --sudo --uninstall
+```
+
 ## Development
 
 Requires Node.js ≥ 20. On CachyOS/Arch, set up the toolchain with

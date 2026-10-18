@@ -16,7 +16,7 @@ master password.
     <namespace>UPM</namespace>
     <category>security</category>
     <dependencies>
-        <nextcloud min-version="27" max-version="30"/>
+        <nextcloud min-version="27" max-version="34"/>
         <php min-version="8.1"/>
     </dependencies>
     <navigations>
