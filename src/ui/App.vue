@@ -33,7 +33,14 @@ function onChangeDatabase(): void {
 <template>
   <div
     class="upm-app"
-    style="padding: 20px"
+    style="
+      padding: 20px;
+      background-color: var(--color-main-background);
+      color: var(--color-main-text);
+      border-radius: var(--border-radius-large, 8px);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      max-width: 1000px;
+    "
     @click="touch"
     @keydown="touch"
   >

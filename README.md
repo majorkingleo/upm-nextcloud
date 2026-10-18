@@ -5,6 +5,22 @@ encrypted database in your Nextcloud files. It reads and writes the same
 database format as [Universal Password Manager](https://upm.sourceforge.net/)
 (UPM), so your existing password databases open here unchanged.
 
+## Screenshots
+
+Keep several databases anywhere in your files; each is tracked by its
+Nextcloud file id, so renaming or moving it does not break the list.
+
+![Database picker](img/screenshots/databases.png)
+
+Unlocking happens entirely in the browser.
+
+![Unlock screen](img/screenshots/unlock.png)
+
+Browse, add and edit accounts; save, sync and export act on the selected
+database.
+
+![Accounts and account editor](img/screenshots/accounts.png)
+
 ## Your passwords never leave the browser
 
 All encryption and decryption happens **on your device**. Nextcloud only ever
