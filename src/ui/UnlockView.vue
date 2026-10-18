@@ -59,7 +59,7 @@ async function unlock(): Promise<void> {
       {{ t('upm', 'All decryption happens in your browser. Only you can read your passwords.') }}
     </p>
 
-    <p>
+    <p style="display: flex; flex-direction: column; gap: 6px">
       <label for="upm-master-password">{{ t('upm', 'Master password') }}</label>
       <input
         id="upm-master-password"
@@ -68,6 +68,7 @@ async function unlock(): Promise<void> {
         autocomplete="current-password"
         :disabled="busy"
         :aria-invalid="error !== ''"
+        style="width: 100%; box-sizing: border-box"
       />
     </p>
 
