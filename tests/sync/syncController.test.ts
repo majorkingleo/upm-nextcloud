@@ -17,12 +17,14 @@ vi.mock('../../src/storage/syncBase', () => ({
 import { AccountInformation } from '../../src/format/account';
 import { DatabaseOptions } from '../../src/format/options';
 import { PasswordDatabase } from '../../src/format/passwordDatabase';
+import type { DatabaseDescriptor } from '../../src/storage/descriptor';
 import { getDb, putDb } from '../../src/storage/remote';
 import { getBase, saveBase, saveConflictBackup } from '../../src/storage/syncBase';
 import { sync } from '../../src/sync/syncController';
 
 const PASSWORD = 'test123';
 const SALT = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
+const DB: DatabaseDescriptor = { id: 'db-1', label: 'test', path: 'upm/test.db' };
 
 /** An account with overridable fields. */
 function acc(name: string, fields: Partial<AccountInformation> = {}): AccountInformation {
@@ -66,15 +68,27 @@ describe('sync with no remote database', () => {
     vi.mocked(getDb).mockResolvedValue(null);
     const local = await load(await bytesOf([acc('a')], 3));
 
-    const result = await sync(local, PASSWORD);
+    const result = await sync(local, PASSWORD, DB);
 
     expect(result.outcome).toBe('uploaded');
+    expect(getDb).toHaveBeenCalledWith(DB);
     expect(putDb).toHaveBeenCalledTimes(1);
+    expect(putDb).toHaveBeenCalledWith(DB, expect.any(Uint8Array));
     expect(saveBase).toHaveBeenCalledTimes(1);
+    expect(saveBase).toHaveBeenCalledWith(DB.id, expect.any(Uint8Array));
     // The uploaded bytes are the local database, with the revision unchanged.
-    const uploaded = vi.mocked(putDb).mock.calls[0]![0];
+    const uploaded = vi.mocked(putDb).mock.calls[0]![1];
     expect(uploaded[3]).toBe(0x03);
     expect((await load(uploaded)).getRevision()).toBe(3);
+  });
+
+  it('refuses to sync a database that has not been saved yet', async () => {
+    const local = await load(await bytesOf([acc('a')], 3));
+
+    await expect(sync(local, PASSWORD, { id: '', label: 'new', path: 'upm/new.db' })).rejects.toThrow(
+      'Save the database before syncing.',
+    );
+    expect(getDb).not.toHaveBeenCalled();
   });
 
   it('does not update the base when the upload fails', async () => {
@@ -82,7 +96,7 @@ describe('sync with no remote database', () => {
     vi.mocked(putDb).mockRejectedValue(new Error('network down'));
     const local = await load(await bytesOf([acc('a')], 3));
 
-    await expect(sync(local, PASSWORD)).rejects.toThrow('network down');
+    await expect(sync(local, PASSWORD, DB)).rejects.toThrow('network down');
     expect(saveBase).not.toHaveBeenCalled();
   });
 });
@@ -93,11 +107,13 @@ describe('sync against a merge base', () => {
     vi.mocked(getDb).mockResolvedValue(same);
     vi.mocked(getBase).mockResolvedValue(same);
 
-    const result = await sync(await load(same), PASSWORD);
+    const result = await sync(await load(same), PASSWORD, DB);
 
     expect(result.outcome).toBe('up-to-date');
+    expect(getBase).toHaveBeenCalledWith(DB.id);
     expect(putDb).not.toHaveBeenCalled();
     expect(saveBase).toHaveBeenCalledTimes(1);
+    expect(saveBase).toHaveBeenCalledWith(DB.id, expect.any(Uint8Array));
   });
 
   it('downloads when only the remote changed', async () => {
@@ -106,12 +122,12 @@ describe('sync against a merge base', () => {
     vi.mocked(getDb).mockResolvedValue(remote);
     vi.mocked(getBase).mockResolvedValue(base);
 
-    const result = await sync(await load(base), PASSWORD);
+    const result = await sync(await load(base), PASSWORD, DB);
 
     expect(result.outcome).toBe('downloaded');
     expect(result.database.getAccount('b')).toBeDefined();
     expect(putDb).not.toHaveBeenCalled();
-    expect(saveBase).toHaveBeenCalledWith(remote);
+    expect(saveBase).toHaveBeenCalledWith(DB.id, remote);
   });
 
   it('uploads the merged database when only the local changed', async () => {
@@ -120,7 +136,7 @@ describe('sync against a merge base', () => {
     vi.mocked(getDb).mockResolvedValue(base);
     vi.mocked(getBase).mockResolvedValue(base);
 
-    const result = await sync(await load(local), PASSWORD);
+    const result = await sync(await load(local), PASSWORD, DB);
 
     expect(result.outcome).toBe('merged');
     expect(result.database.getAccount('a')?.password).toBe('L');
@@ -136,7 +152,7 @@ describe('sync against a merge base', () => {
     vi.mocked(getDb).mockResolvedValue(remote);
     vi.mocked(getBase).mockResolvedValue(base);
 
-    const result = await sync(await load(local), PASSWORD);
+    const result = await sync(await load(local), PASSWORD, DB);
 
     expect(result.outcome).toBe('merged');
     expect(result.conflictCount).toBe(1);
@@ -150,7 +166,7 @@ describe('sync against a merge base', () => {
     vi.mocked(getDb).mockResolvedValue(remote);
     vi.mocked(getBase).mockResolvedValue(new Uint8Array([1, 2, 3, 4]));
 
-    const result = await sync(await load(local), PASSWORD);
+    const result = await sync(await load(local), PASSWORD, DB);
 
     expect(result.fallback).toBe(true);
     expect(result.outcome).toBe('uploaded');
@@ -167,11 +183,11 @@ describe('last-writer-wins fallback (no base)', () => {
     const local = await bytesOf([acc('a')], 5);
     vi.mocked(getDb).mockResolvedValue(remote);
 
-    const result = await sync(await load(local), PASSWORD);
+    const result = await sync(await load(local), PASSWORD, DB);
 
     expect(result.fallback).toBe(true);
     expect(result.outcome).toBe('uploaded');
-    expect(saveConflictBackup).toHaveBeenCalledWith(remote);
+    expect(saveConflictBackup).toHaveBeenCalledWith(DB.id, remote);
     expect(putDb).toHaveBeenCalledTimes(1);
   });
 
@@ -180,11 +196,11 @@ describe('last-writer-wins fallback (no base)', () => {
     const remote = await bytesOf([acc('a')], 5);
     vi.mocked(getDb).mockResolvedValue(remote);
 
-    const result = await sync(await load(local), PASSWORD);
+    const result = await sync(await load(local), PASSWORD, DB);
 
     expect(result.outcome).toBe('downloaded');
     expect(result.database.getRevision()).toBe(5);
-    expect(saveConflictBackup).toHaveBeenCalledWith(local);
+    expect(saveConflictBackup).toHaveBeenCalledWith(DB.id, local);
     expect(putDb).not.toHaveBeenCalled();
   });
 
@@ -192,7 +208,7 @@ describe('last-writer-wins fallback (no base)', () => {
     const same = await bytesOf([acc('a')], 4);
     vi.mocked(getDb).mockResolvedValue(same);
 
-    const result = await sync(await load(same), PASSWORD);
+    const result = await sync(await load(same), PASSWORD, DB);
 
     expect(result.outcome).toBe('up-to-date');
     expect(result.fallback).toBe(true);

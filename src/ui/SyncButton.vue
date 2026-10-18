@@ -5,9 +5,16 @@
 import { n, t } from '@nextcloud/l10n';
 import { ref } from 'vue';
 
+import { ReadOnlyError } from '../storage/remote';
 import type { SyncResult } from '../sync/syncController';
 import { sync } from '../sync/syncController';
-import { currentDatabase, currentKey, setDatabase, touch } from '../state/session';
+import {
+  activeDescriptor,
+  currentDatabase,
+  currentKey,
+  setDatabase,
+  touch,
+} from '../state/session';
 import { notify } from './notify';
 
 const busy = ref(false);
@@ -37,16 +44,25 @@ function outcomeMessage(result: SyncResult): string {
 async function run(): Promise<void> {
   const db = currentDatabase.value;
   const key = currentKey.value;
-  if (!db || key === null || busy.value) {
+  const descriptor = activeDescriptor.value;
+  if (!db || key === null || !descriptor || busy.value) {
+    return;
+  }
+  if (descriptor.id === '') {
+    notify(t('upm', 'Save the database before syncing.'));
     return;
   }
   busy.value = true;
   try {
-    const result = await sync(db, key);
-    setDatabase(result.database, key);
+    const result = await sync(db, key, descriptor);
+    setDatabase(result.database, key, descriptor);
     notify(outcomeMessage(result));
-  } catch {
-    notify(t('upm', 'Sync failed. Check your connection and try again.'));
+  } catch (error) {
+    notify(
+      error instanceof ReadOnlyError
+        ? t('upm', 'This database is read-only.')
+        : t('upm', 'Sync failed. Check your connection and try again.'),
+    );
   } finally {
     busy.value = false;
     touch();

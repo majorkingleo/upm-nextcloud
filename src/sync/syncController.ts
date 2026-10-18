@@ -6,6 +6,7 @@
 
 import { PasswordDatabase } from '../format/passwordDatabase';
 import { accountsEqual, merge } from '../merge/merger';
+import type { DatabaseDescriptor } from '../storage/descriptor';
 import { getDb, putDb } from '../storage/remote';
 import { getBase, saveBase, saveConflictBackup } from '../storage/syncBase';
 
@@ -24,34 +25,43 @@ export interface SyncResult {
 }
 
 /**
- * Synchronise `local` with the copy in the user's Nextcloud files, using
- * `password` (the master password) to decrypt the remote database and the base.
+ * Synchronise `local` with the copy at `descriptor`, using `password` (the
+ * master password) to decrypt the remote database and the base.
  */
-export async function sync(local: PasswordDatabase, password: string): Promise<SyncResult> {
-  const remoteBytes = await getDb();
+export async function sync(
+  local: PasswordDatabase,
+  password: string,
+  descriptor: DatabaseDescriptor,
+): Promise<SyncResult> {
+  if (descriptor.id === '') {
+    throw new Error('Save the database before syncing.');
+  }
+
+  const remoteBytes = await getDb(descriptor);
 
   if (remoteBytes === null) {
     // No remote database yet -> publish the local one.
     const bytes = await local.toBytes();
-    await putDb(bytes);
-    await saveBase(bytes);
+    await putDb(descriptor, bytes);
+    await saveBase(descriptor.id, bytes);
     return { outcome: 'uploaded', database: local, conflictCount: 0, fallback: false };
   }
 
   const remote = await PasswordDatabase.load(remoteBytes, password);
-  const base = await loadBase(password);
+  const base = await loadBase(password, descriptor.id);
 
   return base === null
-    ? lastWriterWins(local, remote, remoteBytes)
-    : mergeSync(base, local, remote, remoteBytes);
+    ? lastWriterWins(local, remote, remoteBytes, descriptor)
+    : mergeSync(base, local, remote, remoteBytes, descriptor);
 }
 
 /**
- * Load the merge base, or null when it is missing or cannot be decrypted with
- * the current password (first sync, or after a master-password change).
+ * Load the merge base for one database, or null when it is missing or cannot
+ * be decrypted with the current password (first sync, or after a password
+ * change).
  */
-async function loadBase(password: string): Promise<PasswordDatabase | null> {
-  const bytes = await getBase();
+async function loadBase(password: string, databaseId: string): Promise<PasswordDatabase | null> {
+  const bytes = await getBase(databaseId);
   if (bytes === null) {
     return null;
   }
@@ -68,14 +78,15 @@ async function mergeSync(
   local: PasswordDatabase,
   remote: PasswordDatabase,
   remoteBytes: Uint8Array,
+  descriptor: DatabaseDescriptor,
 ): Promise<SyncResult> {
   const result = merge(base, local, remote);
 
   if (result.uploadRequired) {
     // Local edits / additions / deletions and/or conflicts must be published.
     const bytes = await result.merged.save();
-    await putDb(bytes);
-    await saveBase(bytes);
+    await putDb(descriptor, bytes);
+    await saveBase(descriptor.id, bytes);
     return {
       outcome: 'merged',
       database: result.merged,
@@ -86,12 +97,12 @@ async function mergeSync(
 
   if (accountsEqual(local, remote)) {
     // Both sides already agree -> nothing to transfer.
-    await saveBase(await local.toBytes());
+    await saveBase(descriptor.id, await local.toBytes());
     return { outcome: 'up-to-date', database: local, conflictCount: 0, fallback: false };
   }
 
   // Only the remote changed -> adopt the remote copy.
-  await saveBase(remoteBytes);
+  await saveBase(descriptor.id, remoteBytes);
   return { outcome: 'downloaded', database: remote, conflictCount: 0, fallback: false };
 }
 
@@ -103,23 +114,24 @@ async function lastWriterWins(
   local: PasswordDatabase,
   remote: PasswordDatabase,
   remoteBytes: Uint8Array,
+  descriptor: DatabaseDescriptor,
 ): Promise<SyncResult> {
   if (remote.getRevision() < local.getRevision()) {
     // Local wins: keep the remote we are about to overwrite.
-    await saveConflictBackup(remoteBytes);
+    await saveConflictBackup(descriptor.id, remoteBytes);
     const bytes = await local.toBytes();
-    await putDb(bytes);
-    await saveBase(bytes);
+    await putDb(descriptor, bytes);
+    await saveBase(descriptor.id, bytes);
     return { outcome: 'uploaded', database: local, conflictCount: 0, fallback: true };
   }
 
   if (remote.getRevision() > local.getRevision()) {
     // Remote wins: keep the local we are about to overwrite.
-    await saveConflictBackup(await local.toBytes());
-    await saveBase(remoteBytes);
+    await saveConflictBackup(descriptor.id, await local.toBytes());
+    await saveBase(descriptor.id, remoteBytes);
     return { outcome: 'downloaded', database: remote, conflictCount: 0, fallback: true };
   }
 
-  await saveBase(await local.toBytes());
+  await saveBase(descriptor.id, await local.toBytes());
   return { outcome: 'up-to-date', database: local, conflictCount: 0, fallback: true };
 }

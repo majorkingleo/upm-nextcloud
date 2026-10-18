@@ -40,9 +40,9 @@ copies so nothing is lost.
 ```mermaid
 sequenceDiagram
   participant B as Browser
-  participant IB as IndexedDB base
-  participant N as Nextcloud upm.db
-  B->>N: GET /apps/upm/db
+  participant IB as IndexedDB base (per database)
+  participant N as Nextcloud database file
+  B->>N: GET /apps/upm/databases/{fileId}
   alt no remote yet
     B->>N: PUT local database
   else remote present
@@ -59,18 +59,26 @@ sequenceDiagram
   B->>IB: write the new base (only after a converged sync)
 ```
 
+### Multiple databases
+
+Keep any number of `*.db` files anywhere in your Nextcloud files. The picker
+lists the files in your database folder, and other locations can be added by
+path. A database is tracked by its Nextcloud **file id**, so renaming or moving
+it in Files does not break the list. Each database has its own master password,
+sync base and conflict backups; only one is unlocked at a time.
+
 ## Status
 
 Work in progress. The crypto/format library, the Nextcloud backend and the
-browser UI (unlock, edit, save, sync) are implemented; hardening, packaging and
-end-to-end tests remain. See the phase-by-phase plan in
+browser UI (database picker, unlock, edit, save, sync) are implemented;
+hardening, packaging and end-to-end tests remain. See the phase-by-phase plan in
 [`doc/implementation-checklist.md`](doc/implementation-checklist.md).
 
-## Roadmap
+## Features
 
 * Unlock and browse your accounts in the browser.
 * Add, edit and delete accounts.
-* Sync against the same `upm.db` your UPM app uses — a three-way merge keeps
+* Sync against the same `.db` file your UPM app uses — a three-way merge keeps
   edits from both sides and saves conflicts as copies.
 * Keep several databases at any location in your files and switch between them.
 * Export an encrypted copy of the database for backup.
