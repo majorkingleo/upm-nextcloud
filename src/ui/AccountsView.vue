@@ -141,6 +141,10 @@ function remove(): void {
           flex: 0 0 220px;
           width: 220px;
           overflow-wrap: anywhere;
+          max-height: calc(100vh - var(--header-height, 50px) - 240px);
+          overflow-y: auto;
+          scrollbar-width: thin;
+          padding-right: 4px;
         "
       >
         <li v-for="name in names" :key="name" style="margin-bottom: 4px">

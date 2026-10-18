@@ -134,6 +134,11 @@ It rebuilds `js/upm.js`, packages the app, copies it into the container (default
 enables it. Override the container, app dir or web user with `--container`,
 `--app-dir` and `--web-user`; `--no-enable` and `--no-build` are also available.
 
+Pass `--bump` when the frontend changed: Nextcloud derives the `?v=` cache
+buster for `js/upm.js` from the app version in `appinfo/info.xml`, so without a
+version bump browsers keep the old bundle. The script increments the patch
+version and runs `occ upgrade` when Nextcloud asks for it.
+
 To uninstall (disable the app and remove its code; users' `.db` files are left
 untouched):
 

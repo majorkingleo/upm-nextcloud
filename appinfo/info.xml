@@ -10,7 +10,7 @@ Nextcloud files. All encryption and decryption happens in your browser, so the
 Nextcloud server only ever stores the opaque encrypted file and never sees your
 master password.
     ]]></description>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <licence>gpl</licence>
     <author>UPM for Nextcloud contributors</author>
     <namespace>UPM</namespace>

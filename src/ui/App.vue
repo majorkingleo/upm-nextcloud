@@ -40,6 +40,9 @@ function onChangeDatabase(): void {
       border-radius: var(--border-radius-large, 8px);
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
       max-width: 1000px;
+      max-height: calc(100vh - var(--header-height, 50px) - 24px);
+      overflow-y: auto;
+      scrollbar-width: thin;
     "
     @click="touch"
     @keydown="touch"

@@ -27,6 +27,7 @@ USE_SUDO=0
 DO_BUILD=1
 DO_ENABLE=1
 UNINSTALL=0
+BUMP=0
 
 usage() {
 	cat <<'EOF'
@@ -44,6 +45,8 @@ Options:
   --sudo             Prefix docker with `sudo -n` (AIO installs usually need it)
   --no-build         Skip the frontend build; use the existing js/upm.js
   --no-enable        Copy the files but do not run occ app:enable
+  --bump             Increment the patch version in appinfo/info.xml before
+                     building (the app version is the bundle cache-buster)
   --uninstall        Disable and remove the app (user .db files are untouched)
   -h, --help         Show this help
 
@@ -62,6 +65,7 @@ while [ $# -gt 0 ]; do
 		--sudo) USE_SUDO=1; shift ;;
 		--no-build) DO_BUILD=0; shift ;;
 		--no-enable) DO_ENABLE=0; shift ;;
+		--bump) BUMP=1; shift ;;
 		--uninstall) UNINSTALL=1; shift ;;
 		-h|--help) usage; exit 0 ;;
 		-*) die "unknown option: $1 (try --help)" ;;
@@ -85,6 +89,16 @@ fi
 
 if [ "$scp_required" -eq 1 ]; then
 	command -v scp >/dev/null 2>&1 || die "scp not found"
+
+	if [ "$BUMP" -eq 1 ]; then
+		INFO="$PROJECT_ROOT/appinfo/info.xml"
+		CURRENT="$(sed -n 's:.*<version>\(.*\)</version>.*:\1:p' "$INFO" | head -1)"
+		[ -n "$CURRENT" ] || die "could not read <version> from $INFO"
+		IFS=. read -r MAJOR MINOR PATCH <<< "$CURRENT"
+		NEW="$MAJOR.$MINOR.$((PATCH + 1))"
+		sed -i "s:<version>$CURRENT</version>:<version>$NEW</version>:" "$INFO"
+		echo "==> Bumped app version $CURRENT -> $NEW"
+	fi
 
 	if [ "$DO_BUILD" -eq 1 ]; then
 		bash "$PROJECT_ROOT/scripts/build-frontend.sh"
@@ -145,6 +159,13 @@ tar -xzf "$TARBALL" -C "$STAGE"
 
 if [ "$DO_ENABLE" = "1" ]; then
 	"${DOCKER[@]}" exec -u "$WEB_USER" "$CONTAINER" php occ app:enable upm
+
+	# A version bump makes Nextcloud require an app upgrade.
+	if "${DOCKER[@]}" exec -u "$WEB_USER" "$CONTAINER" php occ status --output=json 2>/dev/null | grep -q '"needsDbUpgrade":true'; then
+		echo "Upgrading Nextcloud app version ..."
+		"${DOCKER[@]}" exec -u "$WEB_USER" "$CONTAINER" php occ upgrade --no-interaction
+	fi
+
 	"${DOCKER[@]}" exec -u "$WEB_USER" "$CONTAINER" php occ app:list --enabled | grep -q upm ||
 		{ echo "error: upm is not listed after enabling" >&2; exit 1; }
 fi
