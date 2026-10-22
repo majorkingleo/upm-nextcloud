@@ -4,6 +4,7 @@
 // unlocked. Any click resets the auto-lock idle timer.
 
 import { t } from '@nextcloud/l10n';
+import { onMounted, ref } from 'vue';
 
 import {
   activeDescriptor,
@@ -13,11 +14,28 @@ import {
   touch,
   unlocked,
 } from '../state/session';
+import { restoreLastOpened } from '../storage/resume';
 import AccountsView from './AccountsView.vue';
 import DatabasesView from './DatabasesView.vue';
 import ExportButton from './ExportButton.vue';
 import SyncButton from './SyncButton.vue';
 import UnlockView from './UnlockView.vue';
+
+/** True until the last opened database (if any) has been selected. */
+const booting = ref(true);
+
+onMounted(async () => {
+  try {
+    const descriptor = await restoreLastOpened();
+    if (descriptor !== null) {
+      selectDatabase(descriptor);
+    }
+  } catch {
+    // A failed restore is not fatal: the database list is shown instead.
+  } finally {
+    booting.value = false;
+  }
+});
 
 function onLock(): void {
   lock();
@@ -47,7 +65,8 @@ function onChangeDatabase(): void {
     @click="touch"
     @keydown="touch"
   >
-    <DatabasesView v-if="!selectedDatabase" />
+    <p v-if="booting" style="opacity: 0.7">{{ t('upm', 'Loading…') }}</p>
+    <DatabasesView v-else-if="!selectedDatabase" />
     <UnlockView v-else-if="!unlocked" />
     <template v-else>
       <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px">

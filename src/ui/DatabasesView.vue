@@ -19,6 +19,7 @@ import {
 } from '../storage/registry';
 import { getConfig, listDatabases, lookupDatabase } from '../storage/remote';
 import { hasLegacyBase, migrateLegacyBase } from '../storage/syncBase';
+import { adoptRemoteId } from '../storage/resume';
 import { selectDatabase } from '../state/session';
 
 interface Entry extends DatabaseDescriptor {
@@ -72,13 +73,15 @@ async function refresh(): Promise<void> {
     }
 
     // Databases outside the root folder are not listed by the server; verify
-    // them individually so they do not show up as missing.
+    // them individually so they do not show up as missing. A file that came
+    // back under a new id (e.g. a re-created instance) is relinked by path.
     await Promise.all(
       [...merged.values()]
         .filter((entry) => entry.missing === true)
         .map(async (entry) => {
           const found = await lookupDatabase(entry.path).catch(() => null);
           if (found !== null) {
+            merged.delete(entry.id);
             merged.set(found.id, {
               id: found.id,
               path: found.path,
@@ -86,6 +89,17 @@ async function refresh(): Promise<void> {
               canWrite: found.canWrite,
               missing: false,
             });
+            // Keep the registry in step, adopting a new file id when the
+            // instance handed one out for the same path.
+            if (found.id !== entry.id) {
+              await adoptRemoteId(
+                { id: entry.id, label: entry.label, path: entry.path, lastOpenedAt: 0 },
+                found,
+              );
+              if (lastOpenedId.value === entry.id) {
+                lastOpenedId.value = found.id;
+              }
+            }
           }
         }),
     );
@@ -272,7 +286,10 @@ onMounted(refresh);
         <div style="flex: 1 1 auto; min-width: 0">
           <div style="font-weight: bold">
             {{ entry.label }}
-            <span v-if="entry.id === lastOpenedId" style="opacity: 0.6">·</span>
+            <span
+              v-if="entry.id === lastOpenedId"
+              style="opacity: 0.6; font-weight: normal"
+            >· {{ t('upm', 'Last opened') }}</span>
           </div>
           <div style="opacity: 0.7; overflow-wrap: anywhere">{{ entry.path }}</div>
           <div v-if="entry.missing" style="color: var(--color-error-text, #a30000)">
