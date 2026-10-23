@@ -134,6 +134,18 @@ else
 fi
 DOCKER=("${SUDO[@]}" docker)
 
+# Fail early (before touching the instance) when the daemon is unreachable.
+if ! "${DOCKER[@]}" info >/dev/null 2>&1; then
+	if [ "$USE_SUDO" = "1" ]; then
+		echo "error: cannot reach the Docker daemon even with 'sudo -n'." >&2
+		echo "       Check that $(id -un) may run sudo without a password." >&2
+	else
+		echo "error: cannot reach the Docker daemon as $(id -un)." >&2
+		echo "       Re-run with --sudo, or add the user to the docker group." >&2
+	fi
+	exit 1
+fi
+
 if [ "$UNINSTALL" = "1" ]; then
 	"${DOCKER[@]}" exec -u "$WEB_USER" "$CONTAINER" php occ app:disable upm || true
 	"${DOCKER[@]}" exec "$CONTAINER" rm -rf "$APP_DIR"
