@@ -19,9 +19,11 @@ const showPassword = ref(false);
     class="upm-form"
     style="
       display: grid;
-      grid-template-columns: max-content minmax(220px, 1fr);
+      grid-template-columns: max-content minmax(0, 1fr);
       gap: 8px 12px;
       align-items: center;
+      flex: 1 1 320px;
+      min-width: 0;
     "
     @submit.prevent="emit('save')"
   >
@@ -76,7 +78,9 @@ const showPassword = ref(false);
       style="width: 100%; box-sizing: border-box; resize: vertical"
     />
 
-    <div style="grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 4px">
+    <div
+      style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px"
+    >
       <button type="submit" class="button primary">{{ t('upm', 'Save') }}</button>
       <button type="button" class="button" @click="emit('cancel')">{{ t('upm', 'Cancel') }}</button>
       <button type="button" class="button" @click="emit('delete')">{{ t('upm', 'Delete') }}</button>

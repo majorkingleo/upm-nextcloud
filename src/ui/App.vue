@@ -52,13 +52,14 @@ function onChangeDatabase(): void {
   <div
     class="upm-app"
     style="
-      padding: 20px;
+      padding: clamp(12px, 4vw, 20px);
       background-color: var(--color-main-background);
       color: var(--color-main-text);
       border-radius: var(--border-radius-large, 8px);
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
       max-width: 1000px;
       max-height: calc(100vh - var(--header-height, 50px) - 24px);
+      max-height: calc(100dvh - var(--header-height, 50px) - 24px);
       overflow-y: auto;
       scrollbar-width: thin;
     "
@@ -69,7 +70,15 @@ function onChangeDatabase(): void {
     <DatabasesView v-else-if="!selectedDatabase" />
     <UnlockView v-else-if="!unlocked" />
     <template v-else>
-      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px">
+      <div
+        style="
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+          margin-bottom: 12px;
+        "
+      >
         <button type="button" class="button" @click="onLock">{{ t('upm', 'Lock') }}</button>
         <SyncButton />
         <ExportButton />
@@ -77,7 +86,10 @@ function onChangeDatabase(): void {
           {{ t('upm', 'Change database') }}
         </button>
       </div>
-      <p v-if="activeDescriptor" style="opacity: 0.7; margin-top: 0">
+      <p
+        v-if="activeDescriptor"
+        style="opacity: 0.7; margin-top: 0; overflow-wrap: anywhere"
+      >
         {{ activeDescriptor.label }}
         <span v-if="activeDescriptor.path !== activeDescriptor.label">
           — {{ activeDescriptor.path }}

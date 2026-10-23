@@ -214,7 +214,7 @@ onMounted(refresh);
       {{ t('upm', 'Choose a database from your files, or create a new one.') }}
     </p>
 
-    <div style="display: flex; gap: 8px; margin-bottom: 12px">
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px">
       <button type="button" class="button primary" @click="startExisting">
         {{ t('upm', 'Add existing…') }}
       </button>
@@ -230,7 +230,7 @@ onMounted(refresh);
       v-if="mode !== null"
       style="
         display: grid;
-        grid-template-columns: max-content minmax(220px, 1fr);
+        grid-template-columns: max-content minmax(0, 1fr);
         gap: 8px 12px;
         align-items: center;
         padding: 12px;
@@ -261,7 +261,7 @@ onMounted(refresh);
         style="width: 100%; box-sizing: border-box"
       />
 
-      <div style="grid-column: 1 / -1; display: flex; gap: 8px">
+      <div style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px">
         <button type="submit" class="button primary" :disabled="formBusy">
           {{ mode === 'new' ? t('upm', 'Create') : t('upm', 'Open') }}
         </button>
@@ -277,13 +277,14 @@ onMounted(refresh);
         :key="entry.id"
         style="
           display: flex;
+          flex-wrap: wrap;
           gap: 12px;
           align-items: center;
           padding: 8px 0;
           border-bottom: 1px solid var(--color-border, #ddd);
         "
       >
-        <div style="flex: 1 1 auto; min-width: 0">
+        <div style="flex: 1 1 180px; min-width: 0">
           <div style="font-weight: bold">
             {{ entry.label }}
             <span
@@ -299,17 +300,19 @@ onMounted(refresh);
             {{ t('upm', 'Read-only') }}
           </div>
         </div>
-        <button
-          type="button"
-          class="button primary"
-          :disabled="entry.missing === true"
-          @click="open(entry)"
-        >
-          {{ t('upm', 'Open') }}
-        </button>
-        <button type="button" class="button" @click="remove(entry)">
-          {{ t('upm', 'Remove from list') }}
-        </button>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <button
+            type="button"
+            class="button primary"
+            :disabled="entry.missing === true"
+            @click="open(entry)"
+          >
+            {{ t('upm', 'Open') }}
+          </button>
+          <button type="button" class="button" @click="remove(entry)">
+            {{ t('upm', 'Remove from list') }}
+          </button>
+        </div>
       </li>
       <li v-if="!loading && entries.length === 0">{{ t('upm', 'No databases yet.') }}</li>
     </ul>

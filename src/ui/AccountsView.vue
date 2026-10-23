@@ -109,39 +109,59 @@ function remove(): void {
 
 <template>
   <div class="upm-accounts">
-    <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center">
+    <div
+      style="
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+        align-items: center;
+      "
+    >
       <input
         v-model="search"
         type="search"
         :placeholder="t('upm', 'Search')"
-        style="width: 220px; box-sizing: border-box"
+        style="
+          flex: 1 1 160px;
+          min-width: 0;
+          width: 220px;
+          max-width: 100%;
+          box-sizing: border-box;
+        "
       />
-      <button type="button" class="button" @click="addNew">{{ t('upm', 'New account') }}</button>
-      <button
-        type="button"
-        class="button primary"
-        :disabled="busy || activeDescriptor?.canWrite === false"
-        @click="save"
-      >
-        {{ busy ? t('upm', 'Saving…') : t('upm', 'Save') }}
-      </button>
-      <span v-if="activeDescriptor?.canWrite === false" style="opacity: 0.7">
-        {{ t('upm', 'Read-only') }}
-      </span>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+        <button type="button" class="button" @click="addNew">
+          {{ t('upm', 'New account') }}
+        </button>
+        <button
+          type="button"
+          class="button primary"
+          :disabled="busy || activeDescriptor?.canWrite === false"
+          @click="save"
+        >
+          {{ busy ? t('upm', 'Saving…') : t('upm', 'Save') }}
+        </button>
+        <span v-if="activeDescriptor?.canWrite === false" style="opacity: 0.7">
+          {{ t('upm', 'Read-only') }}
+        </span>
+      </div>
     </div>
 
     <p v-if="status">{{ status }}</p>
 
-    <div style="display: flex; gap: 24px; align-items: flex-start">
+    <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
       <ul
         style="
           list-style: none;
           padding: 0;
           margin: 0;
-          flex: 0 0 220px;
+          flex: 0 1 220px;
           width: 220px;
+          max-width: 100%;
           overflow-wrap: anywhere;
           max-height: calc(100vh - var(--header-height, 50px) - 240px);
+          max-height: calc(100dvh - var(--header-height, 50px) - 240px);
           overflow-y: auto;
           scrollbar-width: thin;
           padding-right: 4px;
